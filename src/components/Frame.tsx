@@ -1,24 +1,36 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useSkin } from '../skin'
 
 /**
  * The thing the game is happening inside.
  *
- * 1971 is a printing terminal on the end of a telephone line, so the frame is
- * a sheet of fanfold paper coming out of a machine: sprocket holes down both
- * edges, a platen at the top, and no screen anywhere. When the remaster
- * arrives it will bring its own frame and everything inside will be laid out
- * identically -- only the box will change.
+ * Both skins get a frame, and the frames are not the same object. 1971 is a
+ * printing terminal on the end of a telephone line, so it is a sheet of
+ * fanfold paper coming out of a machine: sprocket holes down both edges, a
+ * platen at the top, and no screen anywhere. The remaster is a lit bridge, so
+ * it is a screen in a housing with the glass curving away at the edges.
+ * Everything inside is laid out identically -- only the box changes.
  */
 export function Frame({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
+  const { skin } = useSkin()
   return (
     <div className="cabinet">
       <div className="bezel">
-        <div className="platen" aria-hidden />
+        {skin === 'teletype' && <div className="platen" aria-hidden />}
         <div className="screen">
           <div className="screen-inner">{children}</div>
-          <div className="sprockets sprockets-left" aria-hidden />
-          <div className="sprockets sprockets-right" aria-hidden />
-          <div className="paper-grain" aria-hidden />
+          {skin === 'teletype' ? (
+            <>
+              <div className="sprockets sprockets-left" aria-hidden />
+              <div className="sprockets sprockets-right" aria-hidden />
+              <div className="paper-grain" aria-hidden />
+            </>
+          ) : (
+            <>
+              <div className="scanlines" aria-hidden />
+              <div className="vignette" aria-hidden />
+            </>
+          )}
         </div>
       </div>
       {footer}

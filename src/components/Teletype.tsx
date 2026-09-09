@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { synth } from '../audio/synth'
 import type { Line } from '../game/types'
 
 /**
@@ -14,10 +15,15 @@ import type { Line } from '../game/types'
  * A scan is exempt. Eight rows of it at reading speed is most of a minute,
  * and the original's printer was hammering all eight out while the captain
  * was already deciding -- so the grid lands whole and the sentences type.
+ *
+ * The print head is played per character, which at this rate is a lot of
+ * one-shot oscillators -- that is why `synth.print()` is as small as it is.
+ * Only the 1971 skin plays it: the remaster has a screen, and a screen does
+ * not clatter.
  */
 const CPS = 60 // Faster than a real ASR-33. A real one is 10, and it is a lot.
 
-export function Teletype({ lines }: { lines: Line[] }) {
+export function Teletype({ lines, clatter = false }: { lines: Line[]; clatter?: boolean }) {
   const [printed, setPrinted] = useState<string[]>([])
   const [partial, setPartial] = useState('')
   const done = useRef(0)
@@ -49,8 +55,10 @@ export function Teletype({ lines }: { lines: Line[] }) {
     const timer = window.setInterval(() => {
       at += 1
       setPartial(text.slice(0, at))
+      if (clatter && synth.sfxOn) synth.print()
       if (at >= text.length) {
         window.clearInterval(timer)
+        if (clatter && synth.sfxOn) synth.carriage()
         done.current += 1
         setPartial('')
         setPrinted((p) => [...p, text])
@@ -59,7 +67,7 @@ export function Teletype({ lines }: { lines: Line[] }) {
 
     return () => window.clearInterval(timer)
     // `printed` is the trigger: finishing one line starts the next.
-  }, [lines, printed.length])
+  }, [lines, printed.length, clatter])
 
   // The paper feeds up; you always read at the bottom.
   useEffect(() => {

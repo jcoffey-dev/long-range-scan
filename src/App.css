@@ -1,13 +1,16 @@
 /* =====================================================================
-   One skin so far, and it is the machine as it was.
+   Two skins, one game. Layout is shared; every colour and every piece of
+   chrome comes from a token that the skin swaps.
 
    1971 is a printing terminal: black ink on fanfold paper, one weight, one
    family, no colour at all. Anything that wants to be emphatic has to do it
    with capitals or spacing, which is exactly the constraint the original was
    written under.
 
-   Everything the skin owns is a token, so that the remaster can swap the lot
-   under `html[data-skin='modern']` without touching a rule below.
+   The remaster is a lit bridge at night: deep blue glass, amber for
+   everything that is yours, cyan for everything that will help you, red for
+   everything that will not. Flat cel fills and one heavy outline on
+   everything, the same house style the cave has.
    ===================================================================== */
 
 :root {
@@ -28,10 +31,56 @@
   --field-bg: #f7f1e0;
   --field-fg: #241f1a;
   --body-font: ui-monospace, "DejaVu Sans Mono", "Cascadia Mono", "Courier New", monospace;
+  /*
+   * The transcript's font, which does not follow the skin.
+   *
+   * It is machine output, and the machine prints a short range scan as eight
+   * rows of three-character columns that only line up in one width. Letting
+   * the remaster's rounded face have the log turned the grid into confetti.
+   * The bridge has a monospaced console; that is not an anachronism, it is
+   * what consoles are.
+   */
+  --mono: ui-monospace, "DejaVu Sans Mono", "Cascadia Mono", "Courier New", monospace;
   --line-height: 1.42;
   --letter-spacing: 0.02em;
 
+  /* Sensor tokens, unused by the teletype but defined so nothing is ever
+     undefined when the skin flips mid-render. */
+  --grid-bg: #0f1830;
+  --grid-rule: #1e2c4c;
+  /* A star is not the same colour as your ship. The first pass had both in
+     amber and a sector read as seven of you. */
+  --star: #f1eddc;
+  --raider: #ff6b5d;
+  --base: #5ad0ff;
+  --ship: #ffc247;
+
   color-scheme: light;
+}
+
+html[data-skin='modern'] {
+  /* --- now: the bridge ------------------------------------------------ */
+  --ink: #e8f1ff;
+  --ink-dim: #8ea6c8;
+  --ink-bright: #ffffff;
+  --accent: #ffc247;
+  --warn: #ff6b5d;
+  --outline: #070c18;
+  --screen-bg: linear-gradient(175deg, #1a2647 0%, #101a35 55%, #070d1e 100%);
+  --screen-radius: 26px;
+  --paper-edge: transparent;
+  --glow: 0 0 22px rgba(90, 208, 255, 0.16);
+  --btn-radius: 999px;
+  --btn-shadow: 4px 4px 0 var(--outline);
+  --btn-bg: #e8f1ff;
+  --btn-fg: #070c18;
+  --field-bg: #e8f1ff;
+  --field-fg: #070c18;
+  --body-font: ui-rounded, "Nunito", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --line-height: 1.5;
+  --letter-spacing: 0;
+
+  color-scheme: dark;
 }
 
 /* =====================================================================
@@ -59,6 +108,12 @@
   border-radius: calc(var(--screen-radius) + 10px);
   background: #cfc4ab;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+html[data-skin='modern'] .bezel {
+  background: linear-gradient(160deg, #16203c 0%, #0a1122 100%);
+  border: 4px solid var(--outline);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.65);
 }
 
 /* The platen: the roller the paper comes over, with the feed knob at the end. */
@@ -103,12 +158,18 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  padding: clamp(12px, 2.6vw, 26px) 34px;
+  padding: clamp(12px, 2.6vw, 26px) clamp(12px, 2.6vw, 26px);
   color: var(--ink);
   font-family: var(--body-font);
   font-size: clamp(10px, 1.45vw, 14px);
   line-height: var(--line-height);
   letter-spacing: var(--letter-spacing);
+}
+
+/* The paper has sprocket holes down both edges; the bridge does not. */
+:root:not([data-skin='modern']) .screen-inner {
+  padding-left: 34px;
+  padding-right: 34px;
 }
 
 .screen-body {
@@ -151,6 +212,15 @@
   letter-spacing: 0.14em;
 }
 
+html[data-skin='modern'] .accent {
+  letter-spacing: 0;
+}
+
+html[data-skin='modern'] .warn {
+  color: var(--warn);
+  letter-spacing: 0;
+}
+
 /* --- paper chrome ---------------------------------------------------- */
 
 .sprockets {
@@ -186,6 +256,28 @@
     repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.02) 0 1px, transparent 1px 4px);
 }
 
+/* --- bridge chrome ---------------------------------------------------- */
+
+/* Glass, not paper: a faint horizontal structure and a darkened rim. */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.035) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 120px 34px rgba(0, 0, 0, 0.55);
+}
+
 /* =====================================================================
    The transcript
    ===================================================================== */
@@ -214,6 +306,7 @@
 .printed {
   white-space: pre;
   min-height: 1.2em;
+  font-family: var(--mono);
 }
 
 /* The print head: a block where the next character is about to land. */
@@ -225,6 +318,484 @@
   vertical-align: text-bottom;
   background: currentColor;
   opacity: 0.5;
+}
+
+html[data-skin='modern'] .head {
+  display: none;
+}
+
+/* =====================================================================
+   The bridge
+
+   Three columns: the ship down the left, the sensors in the middle, the log
+   down the right. A 4:3 screen is wide, and the paper skin's single column
+   throws that width away -- which is fine for paper, since paper is a column,
+   and wrong for a screen.
+   ===================================================================== */
+
+/*
+ * The middle column is nearly twice either side, and the rows stretch rather
+ * than hugging the top. Both of those are the same decision: the sensors are
+ * what the game is, so they get the space, and the two panels are read at a
+ * glance rather than studied. Aligning to the start left a third of the
+ * screen empty under everything, which is the one thing a bridge should
+ * never look like.
+ */
+.bridge {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.76fr) minmax(0, 1.95fr) minmax(0, 0.98fr);
+  gap: clamp(8px, 1.4vw, 16px);
+  align-items: stretch;
+}
+
+/* A phone is a column whatever the skin, and the sensors go first because
+   they are what the game is. */
+@media (max-width: 720px) {
+  .bridge {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'map' 'ship' 'log';
+  }
+
+  .tactical {
+    grid-area: map;
+  }
+
+  .ship-panel {
+    grid-area: ship;
+  }
+
+  .log-panel {
+    grid-area: log;
+  }
+}
+
+.panel {
+  min-width: 0;
+  min-height: 0;
+  padding: 9px 11px;
+  border: 2px solid var(--outline);
+  border-radius: 14px;
+  background: rgba(12, 20, 42, 0.72);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 0.82em;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.panel-label {
+  font-size: 0.72em;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+}
+
+/* --- the ship --------------------------------------------------------- */
+
+.condition {
+  align-self: flex-start;
+  padding: 2px 12px;
+  border: 2px solid var(--outline);
+  border-radius: 999px;
+  font-size: 0.78em;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--outline);
+  background: var(--ink-dim);
+}
+
+.cond-green {
+  background: #6fe39a;
+}
+
+.cond-yellow {
+  background: var(--accent);
+}
+
+.cond-red {
+  background: var(--warn);
+  color: #ffffff;
+}
+
+.cond-docked {
+  background: var(--base);
+}
+
+.meter {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.meter-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.meter-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.bar {
+  height: 10px;
+  border: 2px solid var(--outline);
+  border-radius: 999px;
+  background: #0b1224;
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  transition: width 220ms ease;
+}
+
+.bar-energy span {
+  background: var(--accent);
+}
+
+.bar-shields span {
+  background: var(--base);
+}
+
+.readout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1px 10px;
+  margin: 0;
+  font-size: 0.86em;
+}
+
+.readout dt {
+  color: var(--ink-dim);
+  letter-spacing: 0.06em;
+}
+
+.readout dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.readout dd.big {
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.readout dd.low {
+  color: var(--warn);
+}
+
+.torps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.pip {
+  width: 8px;
+  height: 14px;
+  border: 2px solid var(--outline);
+  border-radius: 3px;
+  background: #0d1730;
+}
+
+.pip.on {
+  background: var(--ink);
+}
+
+.damage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.8em;
+}
+
+.all-well {
+  margin: 0;
+  color: var(--ink-dim);
+}
+
+.damage-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.damage-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--warn);
+}
+
+.damage-list .days {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- the log ---------------------------------------------------------- */
+
+.log-panel {
+  max-height: 100%;
+}
+
+/* The log gives up width to the map and stays readable on the strength of
+   line height rather than size. */
+.log-lines {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8em;
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .log-lines {
+    max-height: 9em;
+  }
+}
+
+.log-line {
+  margin: 0;
+  color: var(--ink-dim);
+}
+
+.log-fire {
+  color: var(--accent);
+}
+
+.log-hit {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.log-damage {
+  color: #ff9f6b;
+}
+
+.log-move {
+  color: var(--ink);
+}
+
+.log-win {
+  color: #6fe39a;
+  font-weight: 800;
+}
+
+.log-end {
+  color: var(--warn);
+  font-weight: 800;
+}
+
+/* =====================================================================
+   The sensors
+
+   Two panels, and each one is a device: break the short range sensors and
+   the sector grid goes dark, break the computer and the chart does. See
+   TacticalView.tsx, which will not draw anything the transcript has not
+   already been told.
+   ===================================================================== */
+
+.tactical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+}
+
+.panel-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  padding: 2px 12px;
+  font-size: 0.85em;
+  letter-spacing: 0.08em;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+}
+
+.tab.on {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/*
+ * The map takes the whole cell it is given, in both directions. An SVG with a
+ * viewBox letterboxes itself, so this is safe: it grows to whichever of the
+ * two runs out first and stays square, which is why the column can be sized
+ * in fractions rather than in vh.
+ */
+.grid-map {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 720px) {
+  .grid-map {
+    flex: none;
+    width: min(100%, 62vh);
+    height: auto;
+  }
+}
+
+.grid-bg {
+  fill: var(--grid-bg);
+  stroke: var(--outline);
+  stroke-width: 3;
+}
+
+.grid-bg.dead {
+  fill: #0a0f1c;
+}
+
+.dead-label {
+  fill: var(--warn);
+  font-family: var(--body-font);
+  font-size: 15px;
+  font-weight: 800;
+  text-anchor: middle;
+  letter-spacing: 0.06em;
+}
+
+.rule {
+  stroke: var(--grid-rule);
+  stroke-width: 1.5;
+}
+
+/* Cel shading: one flat fill, one heavy outline, and a highlight that is a
+   second flat fill rather than a gradient. */
+.mark path,
+.mark circle,
+.mark ellipse {
+  stroke: var(--outline);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.mark .lit {
+  stroke: none;
+  fill: rgba(255, 255, 255, 0.5);
+}
+
+.mark-star .lit {
+  fill: #ffffff;
+}
+
+.mark-star circle {
+  fill: var(--star);
+}
+
+.mark-raider path {
+  fill: var(--raider);
+}
+
+.mark-base path {
+  fill: var(--base);
+}
+
+.mark-base .lit {
+  fill: #07243a;
+}
+
+.mark-ship .saucer {
+  fill: var(--ship);
+}
+
+.mark-ship .hull {
+  fill: #d99a1f;
+}
+
+.mark-ship .ring {
+  fill: none;
+  stroke: var(--ship);
+  stroke-width: 1.5;
+  opacity: 0.4;
+}
+
+.mark-ship.red .ring {
+  stroke: var(--warn);
+  stroke-width: 2.5;
+  opacity: 0.9;
+}
+
+/* --- the chart -------------------------------------------------------- */
+
+.quad rect {
+  fill: #16203c;
+  stroke: var(--outline);
+  stroke-width: 2;
+}
+
+.quad text {
+  fill: var(--ink-dim);
+  font-family: var(--body-font);
+  font-size: 13px;
+  font-weight: 800;
+  text-anchor: middle;
+  letter-spacing: 0.04em;
+}
+
+.quad.unknown rect {
+  fill: #0d1428;
+}
+
+.quad.unknown text {
+  fill: #40527a;
+}
+
+.quad.hostile rect {
+  fill: #4a1f24;
+}
+
+.quad.hostile text {
+  fill: var(--warn);
+}
+
+.quad.has-base rect {
+  stroke: var(--base);
+  stroke-width: 3;
+}
+
+/* Where you are, in the colour everything of yours is drawn in. It wins
+   over the hostile fill on purpose: you already know there are raiders here,
+   the scan is printed above. */
+.quad.here rect {
+  fill: var(--ship);
+  stroke-width: 3;
+}
+
+.quad.here text {
+  fill: var(--outline);
 }
 
 /* =====================================================================
@@ -276,6 +847,18 @@
   color: var(--ink-bright);
   font-weight: 700;
   letter-spacing: 0.14em;
+}
+
+html[data-skin='modern'] .statusbar .senses {
+  color: var(--warn);
+  letter-spacing: 0;
+}
+
+html[data-skin='modern'] .banner {
+  color: var(--accent);
+  -webkit-text-stroke: 3px var(--outline);
+  paint-order: stroke fill;
+  text-shadow: 5px 5px 0 var(--outline);
 }
 
 .banner {
@@ -336,9 +919,41 @@
   cursor: default;
 }
 
+html[data-skin='modern'] .btn {
+  transition:
+    transform 110ms ease,
+    box-shadow 110ms ease;
+}
+
+html[data-skin='modern'] .btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--outline);
+}
+
+html[data-skin='modern'] .btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--outline);
+}
+
+html[data-skin='modern'] .tab,
+html[data-skin='modern'] .btn-ghost {
+  box-shadow: none;
+}
+
+html[data-skin='modern'] .tab:hover:not(:disabled),
+html[data-skin='modern'] .btn-ghost:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+
 .btn-primary {
   background: #241f1a;
   color: #f3ecd9;
+}
+
+html[data-skin='modern'] .btn-primary {
+  background: var(--accent);
+  color: var(--outline);
 }
 
 .btn-ghost {
@@ -387,10 +1002,15 @@
 
 /*
  * The way back. The arrow is a pseudo-element rather than part of the label so
- * that it can be the right arrow for the machine you are looking at: the two
- * ASCII characters a printing terminal could actually strike.
+ * that it can be the right arrow for the machine you are looking at: a chevron
+ * on the bridge, and the two ASCII characters a printing terminal could
+ * actually strike on the paper skin.
  */
 .controls .back::before {
+  content: '\2039\00a0';
+}
+
+:root:not([data-skin='modern']) .controls .back::before {
   content: '<-\00a0';
 }
 

@@ -62,7 +62,7 @@ async function call(path: string, init?: RequestInit): Promise<unknown> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     signal: AbortSignal.timeout(TIMEOUT_MS),
-    headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
+    headers: { 'content-type': 'application/json', ...init?.headers },
   })
   const body: unknown = await res.json().catch(() => null)
   if (!res.ok) {

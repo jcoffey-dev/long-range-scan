@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { condition, daysLeft } from '../game/engine'
 import type { Command, Line, Patrol } from '../game/types'
+import { useSkin } from '../skin'
+import { LogPanel } from './LogPanel'
+import { ShipPanel } from './ShipPanel'
+import { TacticalView } from './TacticalView'
 import { Teletype } from './Teletype'
 
 /**
@@ -11,6 +15,18 @@ import { Teletype } from './Teletype'
  * because a printing terminal has no form to fill in and no way back to a
  * field you have already left. That is kept exactly, and it is why this
  * component is a tiny state machine rather than a set of inputs.
+ *
+ * Both skins get that same one-line console, and it is the same console:
+ * whatever the screen around it looks like, the game is played by answering
+ * one question at a time.
+ *
+ * What changes is everything else. The paper is a single column because a
+ * roll of paper is a single column. The remaster is a bridge, which means
+ * three: the ship down the left, the sensors in the middle, the log down the
+ * right. The first draft put the sensors in the middle of a paper-shaped
+ * column with the transcript squeezed underneath, and it was unreadable for
+ * exactly the reason you would expect -- a four-by-three screen is wide, and
+ * a column throws the width away.
  */
 type Ask = 'command' | 'nav-course' | 'nav-warp' | 'tor-course' | 'beams' | 'shields'
 
@@ -43,6 +59,7 @@ export function BridgeScreen({
   over,
   onCommand,
   onPrint,
+  onBlip,
 }: {
   patrol: Patrol
   transcript: Line[]
@@ -51,7 +68,10 @@ export function BridgeScreen({
   over: boolean
   onCommand: (cmd: Command, echo: Line[]) => void
   onPrint: (lines: Line[]) => void
+  onBlip: () => void
 }) {
+  const { skin } = useSkin()
+  const [panel, setPanel] = useState<'sector' | 'galaxy'>('sector')
   const [ask, setAsk] = useState<Ask>('command')
   const [course, setCourse] = useState(0)
   const [text, setText] = useState('')
@@ -103,6 +123,11 @@ export function BridgeScreen({
         return
       }
 
+      // Asking for a scan should show you that scan. The panel follows the
+      // command rather than making the player find the right tab afterwards.
+      if (cmd === 'LRS' || cmd === 'COM') setPanel('galaxy')
+      if (cmd === 'SRS') setPanel('sector')
+
       const simple: Record<string, Command> = {
         SRS: { type: 'srs' },
         LRS: { type: 'lrs' },
@@ -128,6 +153,7 @@ export function BridgeScreen({
         break
       case 'nav-warp':
         onCommand({ type: 'nav', course, warp: value }, [echo(answer)])
+        setPanel('sector')
         setAsk('command')
         break
       case 'tor-course':
@@ -147,26 +173,39 @@ export function BridgeScreen({
 
   return (
     <div className="console">
-      <Teletype lines={transcript} />
+      {skin === 'modern' ? (
+        <div className="bridge">
+          <ShipPanel patrol={patrol} captainName={captainName} />
+          <TacticalView patrol={patrol} panel={panel} onPanel={setPanel} />
+          <LogPanel lines={transcript} />
+        </div>
+      ) : (
+        <>
+          <Teletype lines={transcript} clatter />
 
-      {/*
-        A concession, and the only one: the machine printed the ship's numbers
-        beside a short range scan and nowhere else, so the 1971 way to know
-        your energy was to remember it or spend a command asking. That is fine
-        on paper you can hold and unkind on a phone, where the answer has
-        already scrolled. The scan is still the only place the *galaxy*
-        appears; this strip only ever says what is true of the ship.
-      */}
-      <div className="statusbar">
-        <span>{captainName}</span>
-        <span>STARDATE {patrol.day.toFixed(1)}</span>
-        <span>DAYS {daysLeft(patrol).toFixed(1)}</span>
-        <span>ENERGY {Math.round(patrol.energy)}</span>
-        <span>SHIELDS {Math.round(patrol.shields)}</span>
-        <span>TORP {patrol.torpedoes}</span>
-        <span>RAIDERS {patrol.raidersLeft}</span>
-        <span className={condition(patrol) === 'RED' ? 'senses' : ''}>{condition(patrol)}</span>
-      </div>
+          {/*
+            A concession, and the only one on this skin: the machine printed
+            the ship's numbers beside a short range scan and nowhere else, so
+            the 1971 way to know your energy was to remember it or spend a
+            command asking. That is fine on paper you can hold and unkind on a
+            phone, where the answer has already scrolled. The scan is still
+            the only place the *galaxy* appears; this strip only ever says
+            what is true of the ship.
+          */}
+          <div className="statusbar">
+            <span>{captainName}</span>
+            <span>STARDATE {patrol.day.toFixed(1)}</span>
+            <span>DAYS {daysLeft(patrol).toFixed(1)}</span>
+            <span>ENERGY {Math.round(patrol.energy)}</span>
+            <span>SHIELDS {Math.round(patrol.shields)}</span>
+            <span>TORP {patrol.torpedoes}</span>
+            <span>RAIDERS {patrol.raidersLeft}</span>
+            <span className={condition(patrol) === 'RED' ? 'senses' : ''}>
+              {condition(patrol)}
+            </span>
+          </div>
+        </>
+      )}
 
       {/*
         The prompt never goes away while the patrol is running, even mid-print.
@@ -207,7 +246,10 @@ export function BridgeScreen({
                   key={id}
                   className="btn btn-ghost key"
                   title={what}
-                  onClick={() => submit(id)}
+                  onClick={() => {
+                    onBlip()
+                    submit(id)
+                  }}
                 >
                   {id}
                 </button>

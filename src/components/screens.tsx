@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { DIAL_UP, synth } from '../audio/synth'
 import { MAX_CAPTAINS, MAX_NAME, START_ENERGY, START_TORPEDOES } from '../game/constants'
 import { comparePatrols, outcomeText } from '../game/engine'
 import type { Score } from '../game/highscores'
@@ -21,36 +22,41 @@ import { Btn, Line } from './Frame'
  * The lemonade stand loads from cassette because that is how an Atari got its
  * programs. This game is eight years older than that machine and did not live
  * on a machine you owned at all -- it lived on a mainframe at the end of a
- * telephone line, which you called. So the boot is a call, and it is the same
- * gesture the cave game opens with for the same reason.
+ * telephone line, which you called. So the boot is a real Bell 103 call, and
+ * pushing the handset into the coupler is the gesture that unlocks the audio:
+ * browsers want a gesture before they will make a sound, and that happens to
+ * be exactly the gesture the game already wanted.
  *
- * There is no sound yet. When the remaster lands it brings the synth with it,
- * and this schedule is already shaped to be played rather than only printed.
+ * The stages are printed as they happen, from the same schedule the audio is
+ * built on, so what is on the paper is what is on the line. See DIAL_UP.
  */
 const STAGES: [number, string][] = [
   [0, 'DIAL TONE'],
-  [1.1, 'DIALLING'],
-  [2.6, 'RINGING'],
-  [4.2, 'ANSWER TONE'],
-  [5.2, 'CARRIER -- 110 BAUD, FULL DUPLEX'],
-  [6.0, 'LOGIN ACCEPTED'],
+  [DIAL_UP.dialTone, 'DIALLING 555-1971'],
+  [DIAL_UP.ringAt, 'RINGING'],
+  [DIAL_UP.answerAt, 'ANSWER TONE 2225 HZ'],
+  [DIAL_UP.answerAt + DIAL_UP.answer, 'CARRIER -- 110 BAUD, FULL DUPLEX'],
 ]
-
-const BOOT_TOTAL = 6.8
 
 export function BootScreen({ onLoaded }: { onLoaded: () => void }) {
   const [dialling, setDialling] = useState(false)
   const [stage, setStage] = useState(-1)
+  const stop = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     if (!dialling) return
+    stop.current = synth.dialUp()
 
     const timers = STAGES.map(([at], i) => window.setTimeout(() => setStage(i), at * 1000))
-    const done = window.setTimeout(onLoaded, BOOT_TOTAL * 1000)
+    const done = window.setTimeout(() => {
+      stop.current?.()
+      onLoaded()
+    }, DIAL_UP.total * 1000)
 
     return () => {
       for (const t of timers) window.clearTimeout(t)
       window.clearTimeout(done)
+      stop.current?.()
     }
   }, [dialling, onLoaded])
 
@@ -62,7 +68,13 @@ export function BootScreen({ onLoaded }: { onLoaded: () => void }) {
         <Line>THE PROGRAM IS NOT ON THIS MACHINE. IT IS ON SOMEBODY ELSE'S.</Line>
         <Line className="dim">PUT THE HANDSET IN THE COUPLER AND CALL IT.</Line>
         <Line> </Line>
-        <Btn kind="primary" onClick={() => setDialling(true)}>
+        <Btn
+          kind="primary"
+          onClick={() => {
+            synth.ensure()
+            setDialling(true)
+          }}
+        >
           DIAL
         </Btn>
       </div>
@@ -150,7 +162,13 @@ export function InstructionsScreen({ onDone }: { onDone: () => void }) {
 
 // ------------------------------------------------------------------ setup
 
-export function SetupScreen({ onStart }: { onStart: (names: string[]) => void }) {
+export function SetupScreen({
+  onStart,
+  onBlip,
+}: {
+  onStart: (names: string[]) => void
+  onBlip: () => void
+}) {
   const [names, setNames] = useState<string[]>([''])
 
   const set = (i: number, v: string) =>
@@ -177,7 +195,14 @@ export function SetupScreen({ onStart }: { onStart: (names: string[]) => void })
       <Line> </Line>
       <div className="prompt-row">
         {names.length < MAX_CAPTAINS && (
-          <Btn onClick={() => setNames((n) => [...n, ''])}>ONE MORE</Btn>
+          <Btn
+            onClick={() => {
+              onBlip()
+              setNames((n) => [...n, ''])
+            }}
+          >
+            ONE MORE
+          </Btn>
         )}
         <Btn kind="primary" onClick={() => onStart(names)}>
           CAST OFF

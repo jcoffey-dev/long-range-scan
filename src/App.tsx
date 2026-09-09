@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState, useReducer } from 'react'
+import { DEEP_END, DEEP_PATROL, DEEP_TITLE } from './audio/deepspace'
+import { END_TUNE, PATROL_TUNE, TITLE_TUNE } from './audio/tunes'
+import { synth } from './audio/synth'
 import { HAIL_TEXT } from './game/constants'
 import { makePatrol, randomSeed, shortRangeScan, step } from './game/engine'
 import { fetchScores, submitScores, type Score } from './game/highscores'
 import { makeRng, type Rng } from './game/rng'
 import { currentCaptain, initialState, reducer } from './game/reducer'
 import type { Command, Line } from './game/types'
+import { useSkin } from './skin'
 import { Btn, Fit, Frame } from './components/Frame'
 import { BridgeScreen } from './components/BridgeScreen'
 import {
@@ -40,6 +44,10 @@ export default function App() {
   const [seed] = useState(randomSeed)
   const [state, dispatch] = useReducer(reducer, seed, initialState)
   const rng = useRef<Rng>(makeRng(seed))
+  const [music, setMusic] = useState(true)
+  const [sfx, setSfx] = useState(true)
+  const started = useRef(false)
+  const { skin, toggle: toggleSkin } = useSkin()
   const [scores, setScores] = useState<Score[]>([])
   const [boardState, setBoardState] = useState<BoardState>('loading')
   const [freshScores, setFreshScores] = useState<string[]>([])
@@ -47,6 +55,50 @@ export default function App() {
   const [printing, setPrinting] = useState(false)
 
   const who = currentCaptain(state)
+
+  // ------------------------------------------------------------ audio glue
+
+  const wake = useCallback(() => {
+    if (started.current) return
+    started.current = true
+    synth.ensure()
+    synth.setMusic(music)
+    synth.setSfx(sfx)
+  }, [music, sfx])
+
+  /**
+   * 1971 gets the chiptune it never had; the remaster gets the orchestra.
+   *
+   * It is the same theme in both, in the same key -- see `audio/tunes.ts`.
+   * Switching skin mid-patrol re-scores the piece rather than changing the
+   * record, which is the one thing that makes the toggle feel like a remaster
+   * rather than a second game.
+   */
+  useEffect(() => {
+    if (!started.current) return
+    const front =
+      state.phase === 'title' || state.phase === 'instructions' || state.phase === 'setup'
+    const set =
+      skin === 'modern'
+        ? { title: DEEP_TITLE, patrol: DEEP_PATROL, end: DEEP_END }
+        : { title: TITLE_TUNE, patrol: PATROL_TUNE, end: END_TUNE }
+    const tune =
+      state.phase === 'gameover' || state.phase === 'report'
+        ? set.end
+        : front
+          ? set.title
+          : set.patrol
+    synth.playTune(tune, false)
+  }, [state.phase, skin])
+
+  useEffect(() => {
+    synth.setMusic(music)
+  }, [music])
+  useEffect(() => {
+    synth.setSfx(sfx)
+  }, [sfx])
+
+  const blip = useCallback(() => synth.blip(), [])
 
   const loadBoard = useCallback(async () => {
     setBoardState('loading')
@@ -90,6 +142,28 @@ export default function App() {
   const command = (cmd: Command, echo: Line[]) => {
     if (!state.patrol) return
     const { patrol, lines } = step(state.patrol, cmd, rng.current)
+
+    /*
+     * The sound belongs to what happened, so it is chosen from the lines the
+     * engine produced rather than guessed at from the command. Firing the
+     * beams and hitting something with them are two different noises, and
+     * only the engine knows whether the second one happened.
+     */
+    const said = (t: string) => lines.some((l) => l.text.includes(t))
+
+    if (cmd.type === 'nav') synth.warp()
+    else if (cmd.type === 'beams') synth.beams()
+    else if (cmd.type === 'torpedo') synth.torpedo()
+
+    if (said('COMES APART') || said('DIRECT HIT') || said('IS GONE')) synth.explode()
+    if (said('CONDITION RED')) synth.alert()
+    if (said('UNIT HIT')) synth.hit()
+    if (said('DAMAGED.')) synth.damaged()
+    if (said('MOORED')) synth.dock()
+
+    if (patrol.outcome === 'mission-complete') synth.fanfare()
+    else if (patrol.outcome) synth.sad()
+
     dispatch({ type: 'ADVANCE', patrol, lines: [...echo, ...lines] })
   }
 
@@ -132,6 +206,7 @@ export default function App() {
   }, [state.phase, state.captains, post])
 
   const restart = () => {
+    synth.select()
     const s = randomSeed()
     rng.current = makeRng(s)
     posted.current = false
@@ -140,6 +215,8 @@ export default function App() {
   }
 
   const showScores = () => {
+    wake()
+    synth.select()
     dispatch({ type: 'SHOW_SCORES' })
     if (boardState !== 'ready') void loadBoard()
   }
@@ -149,7 +226,7 @@ export default function App() {
   const moreToCome = state.captains.some((c) => !c.done && c.id !== who?.id)
 
   return (
-    <div className="app">
+    <div className="app" onPointerDown={wake} onKeyDown={wake}>
       <Frame
         footer={
           <div className="controls">
@@ -157,6 +234,37 @@ export default function App() {
             <a className="btn btn-ghost back" href={GAMES_URL} title="The rest of the games">
               GAMES
             </a>
+            <Btn
+              kind="ghost"
+              onClick={() => {
+                wake()
+                setMusic((m) => !m)
+              }}
+              title="Background music"
+            >
+              MUSIC {music ? 'ON' : 'OFF'}
+            </Btn>
+            <Btn
+              kind="ghost"
+              onClick={() => {
+                wake()
+                setSfx((v) => !v)
+              }}
+              title="Sound effects"
+            >
+              SOUND {sfx ? 'ON' : 'OFF'}
+            </Btn>
+            <Btn
+              kind="ghost"
+              onClick={() => {
+                wake()
+                synth.select()
+                toggleSkin()
+              }}
+              title={skin === 'teletype' ? 'Switch to the remaster' : 'Switch to the 1971 terminal'}
+            >
+              {skin === 'teletype' ? 'REMASTER' : '1971'}
+            </Btn>
             <Btn kind="ghost" onClick={restart} title="Abandon this session">
               NEW PATROL
             </Btn>
@@ -178,8 +286,16 @@ export default function App() {
         <Fit>
           {state.phase === 'title' && (
             <TitleGate
-              onStart={() => dispatch({ type: 'SHOW_SETUP' })}
-              onInstructions={() => dispatch({ type: 'SHOW_INSTRUCTIONS' })}
+              onStart={() => {
+                wake()
+                synth.select()
+                dispatch({ type: 'SHOW_SETUP' })
+              }}
+              onInstructions={() => {
+                wake()
+                synth.select()
+                dispatch({ type: 'SHOW_INSTRUCTIONS' })
+              }}
               onScores={showScores}
             />
           )}
@@ -189,7 +305,14 @@ export default function App() {
           )}
 
           {state.phase === 'setup' && (
-            <SetupScreen onStart={(names) => dispatch({ type: 'START', names })} />
+            <SetupScreen
+              onStart={(names) => {
+                wake()
+                synth.select()
+                dispatch({ type: 'START', names })
+              }}
+              onBlip={blip}
+            />
           )}
 
           {(state.phase === 'patrol' || state.phase === 'resolve') && state.patrol && who && (
@@ -201,6 +324,7 @@ export default function App() {
               over={state.phase === 'resolve'}
               onCommand={command}
               onPrint={(lines) => dispatch({ type: 'PRINT', lines })}
+              onBlip={blip}
             />
           )}
 
@@ -209,7 +333,10 @@ export default function App() {
               patrol={state.patrol}
               captain={state.captains[who.id]!}
               moreToCome={moreToCome}
-              onNext={() => dispatch({ type: 'NEXT_TURN' })}
+              onNext={() => {
+                synth.select()
+                dispatch({ type: 'NEXT_TURN' })
+              }}
             />
           )}
 
@@ -226,8 +353,14 @@ export default function App() {
               scores={scores}
               state={boardState}
               highlight={freshScores}
-              onBack={() => dispatch({ type: 'CLOSE_SCORES' })}
-              onRetry={() => void loadBoard()}
+              onBack={() => {
+                synth.select()
+                dispatch({ type: 'CLOSE_SCORES' })
+              }}
+              onRetry={() => {
+                synth.select()
+                void loadBoard()
+              }}
             />
           )}
         </Fit>

@@ -23,8 +23,9 @@ body,
   justify-content: center;
 }
 
-/* The room the machine is standing in: a terminal room in a university
-   basement, lit by the ceiling and nothing else. */
+/* The room the machine is standing in. 1971 is a terminal room in a
+   university basement, lit by the ceiling and nothing else; the remaster is a
+   bridge at night, lit by its own instruments. */
 body {
   background: radial-gradient(120% 80% at 50% 0%, #5a5a5a 0%, #3a3a3a 55%, #232323 100%);
   color: #241f1a;
@@ -33,6 +34,16 @@ body {
   align-items: center;
   justify-content: center;
   padding: clamp(8px, 2vw, 28px);
+  transition: background 400ms ease;
+}
+
+html[data-skin='modern'] body {
+  background:
+    radial-gradient(80% 55% at 18% 0%, rgba(90, 208, 255, 0.14) 0%, transparent 60%),
+    radial-gradient(70% 55% at 86% 18%, rgba(255, 194, 71, 0.12) 0%, transparent 55%),
+    radial-gradient(130% 95% at 50% 100%, #131e3c 0%, #0b1226 55%, #04070f 100%);
+  color: #e8f1ff;
+  font-family: ui-rounded, "Nunito", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
 @media (prefers-reduced-motion: reduce) {
