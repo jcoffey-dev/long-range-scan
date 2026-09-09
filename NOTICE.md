@@ -1,0 +1,116 @@
+# Notice, credits and provenance
+
+## What this is
+
+An independent reimplementation of the starship patrol game that went round
+timesharing systems from 1971 and then every home computer of the following
+decade, written from scratch in TypeScript in 2026.
+
+## Credit where it is due
+
+- **Mike Mayfield**, 1971 — wrote the original, on a Sigma 7 at a college in
+  California, in BASIC, for a machine with no screen. An eight by eight
+  galaxy of eight by eight sectors, searched three digits at a time, is his
+  idea and it is a very good one.
+- **David Ahl** and **Creative Computing**, who carried the version most
+  people actually met, in the type-in book that put a hundred games on a
+  hundred thousand desks.
+- Every university terminal room and school computer club that passed it
+  along, which is how it got everywhere.
+
+This project is not affiliated with or endorsed by anyone connected to the
+original, or with any television programme. No original source code was used,
+consulted or copied.
+
+## Why it is not called what you expect
+
+The 1971 game and its descendants borrowed their setting, and their nouns,
+from a television series. Those nouns are live trademarks belonging to a
+company that enforces them, and this is a public site with somebody's name on
+the footer.
+
+So the mechanics are rebuilt and the vocabulary is ours:
+
+| The original's | Ours |
+| --- | --- |
+| the ship, the fleet, the enemy | your ship, the Fleet, raiders |
+| the energy weapon | beams |
+| the guided weapon | torpedoes |
+| starbase, shields, warp, damage control, stardate | kept — generic to the whole genre, and to science fiction generally |
+
+None of that is a copyright question. Game mechanics are ideas rather than
+expression, and nobody gets to fence off an eight by eight grid. Names are a
+trademark question, which is a different thing entirely: it is about whether
+a reader would think this came from them. Calling it *Long Range Scan* and
+naming the enemy *raiders* answers that, and costs the game nothing — the
+three digits on the chart are what anybody actually remembers.
+
+## How this code came to exist
+
+Clean-room, and worth being specific about because it is what makes the
+licence below meaningful:
+
+- **The rules are not ours to own, and we use them freely.** Sixty-four
+  quadrants of sixty-four sectors, three digits a quadrant, courses 1 to 9
+  round the compass, warp 1 for eight sectors, energy that is also your
+  shields, eight devices that break. All of it is arithmetic that has been in
+  print since 1978.
+- **The constants are reconstructed from behaviour, not copied from a
+  listing.** How much a warp costs, how hard a raider hits at range, how long
+  a repair takes — these are in `src/game/constants.ts`, each with the
+  reasoning next to it, and the places where a judgement call was needed are
+  marked as judgement calls.
+- **The artwork is ours.** There are no imported assets of any kind. The one
+  drawing in the repository is `public/favicon.svg`, which is a scan grid.
+
+## The words on screen are ours, deliberately
+
+This is the part worth reading, because the obvious thing to do was the wrong
+thing.
+
+The published listings have memorable lines in them. Those sentences are
+their authors' writing, not a rule and not a fact — and a project released
+under a copyleft licence has no business licensing words it did not write.
+The two sibling games make exactly this argument in their own NOTICE files;
+this one never shipped with anybody else's wording.
+
+So every line the machine prints here was written for this project, and they
+live together in `src/game/constants.ts` where they can be checked. They are
+shouted because the terminal had no lower case, not because we are shouting.
+
+Two things are not original, and neither is a copyright question:
+
+- **`COMMAND ?`, `COURSE (1-9) ?`, `WARP FACTOR (0-8) ?`.** These are the only
+  sensible words for what they ask, and asking them one at a time is what a
+  printing terminal forces on you rather than a style anybody chose.
+- **The three-digit quadrant code.** `205` meaning two raiders, no starbase
+  and five stars is a fact about an encoding. There is no expression in it to
+  own, and changing it would break the one piece of shared literacy this
+  genre has.
+
+## One rule that is ours
+
+The original ends when the clock does. So does this. What is new is the
+frame: one to four captains fly one patrol each, in turn, and are ranked
+against each other and against the shared board — raiders destroyed, then
+days left, then torpedoes unfired. The reasoning is in `src/game/reducer.ts`.
+
+## Licence
+
+Copyright (C) 2026 John Coffey.
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the **GNU Affero General Public License** as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version — see [LICENSE](LICENSE).
+
+AGPL rather than plain GPL because the leaderboard is a network service: §13
+means anyone who runs a modified copy of this for other people over a network
+has to offer them its source. Running the game without the scores service is
+entirely supported and imposes nothing extra.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+*None of the above is legal advice.*

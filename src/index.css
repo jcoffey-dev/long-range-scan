@@ -1,0 +1,46 @@
+:root {
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+/* The root is a flex item of body; without this the cabinet shrinks to fit. */
+#root {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The room the machine is standing in: a terminal room in a university
+   basement, lit by the ceiling and nothing else. */
+body {
+  background: radial-gradient(120% 80% at 50% 0%, #5a5a5a 0%, #3a3a3a 55%, #232323 100%);
+  color: #241f1a;
+  font-family: ui-monospace, "DejaVu Sans Mono", "Cascadia Mono", "Courier New", monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(8px, 2vw, 28px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

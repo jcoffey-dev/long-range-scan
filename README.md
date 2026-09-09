@@ -1,0 +1,91 @@
+# Long Range Scan
+
+A browser recreation of the 1971 starship patrol game — the one you played on
+a printing terminal, hunting through sixty-four quadrants by reading three
+digits at a time.
+
+It is called *Long Range Scan* rather than the name you are thinking of, and
+[NOTICE.md](NOTICE.md) explains why at length. The short version: the rules
+are free to rebuild and the trademarks are not, so the mechanics are exact
+and the vocabulary is ours.
+
+React + TypeScript + Vite, and not one binary asset.
+
+## Playing
+
+```
+npm install
+npm run dev
+```
+
+The leaderboard is a separate service; run
+[games-scores](https://github.com/Coffey-Labs/games-scores) alongside this if
+you want one, or do not, and the board will say so rather than break.
+
+You dial in rather than switch on, because in 1971 the game was not on your
+machine — it was on somebody else's, down a telephone line.
+
+One to four captains share the keyboard, hot-seat style. A turn is one whole
+patrol rather than one command: you fly yours until the raiders are gone or
+something ends you, and only then does the next captain sit down. Each gets
+their own galaxy, dealt off the same seed.
+
+- The galaxy is **eight by eight quadrants**, each of **eight by eight
+  sectors**. A long range scan reads three digits per quadrant — raiders,
+  starbases, stars — so `205` is two raiders, no base and five stars.
+  Reading those is the whole game.
+- **Courses run 1 to 9** anticlockwise: 1 along the row, 3 up, 5 back, 7
+  down, and 9 is 1 again so that 8.5 has somewhere to go. **Warp 1 is eight
+  sectors.**
+- **3000 units of energy and ten torpedoes.** Energy moves you, fires the
+  beams, and fills the shields; it is all one pool, and that is the entire
+  economy of the game.
+- **Eight devices can break** when you are hit. Damage control only works
+  while you fly, which is why a hurt ship has to keep moving.
+- **Moor beside a starbase** and you are full again — tanks, racks, and a day
+  of repairs. There are rarely more than three or four in a galaxy.
+- **A raider hits harder the closer it is, and spends itself doing it.** Sit
+  at range and you take less and give less. Close in and it is settled either
+  way in two exchanges.
+- **A torpedo goes where it is pointed and nowhere else.** A star swallows
+  it. So does your own starbase, and that ends the patrol in the worst way
+  there is.
+- The clock is the real opponent. Twenty-five to thirty-five days, and
+  sixty-four quadrants to look in.
+
+## High scores
+
+One board, shared by everybody. Ending a session posts every captain in the
+party, and the top 50 comes back ranked best first: raiders destroyed, then
+days left on the orders, then torpedoes still in the racks.
+
+There is no way to clear it. A captain leaves the list only by being pushed
+off the bottom by a better one.
+
+## What is not built yet
+
+- **The remaster.** The 1971 skin is the machine as it was: paper, ink, and a
+  print head. The cel-shaded tactical view is next, and everything is already
+  shaped for it — every colour is a token, the transcript is structured data
+  rather than strings on a page, and `Line.kind` is what the map will read.
+- **Sound.** The synth arrives with the remaster. The dial-up boot in
+  `screens.tsx` is already written to a schedule so it can be played rather
+  than only printed.
+- **Registration on the shared board.** `games-scores` needs one file for
+  `scan` before anything posts; until then the game plays fine and the board
+  says it is not answering.
+
+## Layout
+
+| Path | What is in it |
+| --- | --- |
+| `src/game/constants.ts` | every number, and every word the machine says |
+| `src/game/galaxy.ts` | the compass, the scatter, laying out a quadrant |
+| `src/game/engine.ts` | the rules: warp, beams, torpedoes, being shot at |
+| `src/game/reducer.ts` | phases, and the only place a turn changes hands |
+| `src/components/` | the paper, the console, and the screens either side |
+
+`npm test` proves the parts that are arithmetic rather than judgement: that
+the compass closes, that a scattered galaxy is always worth flying, that a
+warp stops at the rim and short of anything in the way, and that every way a
+patrol can end, ends it.
