@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
+import { navFor } from '../game/aim'
+import { SECTORS } from '../game/constants'
 import { condition, daysLeft } from '../game/engine'
-import type { Command, Line, Patrol } from '../game/types'
+import { adjacent, occupant, same } from '../game/galaxy'
+import type { Command, Coord, Line, Patrol } from '../game/types'
 import { useSkin } from '../skin'
 import { LogPanel } from './LogPanel'
 import { ShipPanel } from './ShipPanel'
-import { TacticalView } from './TacticalView'
+import { TacticalView, type SectorClick } from './TacticalView'
 import { Teletype } from './Teletype'
 
 /**
@@ -27,6 +30,15 @@ import { Teletype } from './Teletype'
  * column with the transcript squeezed underneath, and it was unreadable for
  * exactly the reason you would expect -- a four-by-three screen is wide, and
  * a column throws the width away.
+ *
+ * The remaster also points. Click a sector and you warp to it; click a raider
+ * and you put a torpedo through it; click a starbase and you moor alongside;
+ * click a quadrant on the chart and you cross the galaxy to it. None of that
+ * is a new move. Every click is turned into the same course and warp factor
+ * the prompt would have taken, and the echo below writes the questions and
+ * the answers into the log as though they had been typed -- which is also
+ * how anybody works out that course 3 is north. The keyboard still works and
+ * is still the way it was meant to be played.
  */
 type Ask = 'command' | 'nav-course' | 'nav-warp' | 'tor-course' | 'beams' | 'shields'
 
@@ -86,6 +98,79 @@ export function BridgeScreen({
     kind: 'system',
     text: `${QUESTION[ask]} ? ${answer}`,
   })
+
+  /** The same line a typed answer leaves, for an answer that was clicked. */
+  const asked = (question: string, answer: string): Line => ({
+    kind: 'system',
+    text: `${question} ? ${answer}`,
+  })
+
+  /** A move, expressed the only way the engine accepts one. */
+  const navBy = (d: Coord) => {
+    const { course, warp } = navFor(d)
+    setAsk('command')
+    onCommand({ type: 'nav', course, warp }, [
+      asked(QUESTION.command, 'NAV'),
+      asked(QUESTION['nav-course'], String(course)),
+      asked(QUESTION['nav-warp'], String(warp)),
+    ])
+  }
+
+  const clickSector = ({ at, what }: SectorClick) => {
+    if (what === 'ship' || what === 'star') return onBlip()
+
+    const to = (target: Coord): Coord => ({
+      row: target.row - patrol.sector.row,
+      col: target.col - patrol.sector.col,
+    })
+
+    if (what === 'raider') {
+      const course = navFor(to(at)).course
+      setPanel('sector')
+      setAsk('command')
+      onCommand({ type: 'torpedo', course }, [
+        asked(QUESTION.command, 'TOR'),
+        asked(QUESTION['tor-course'], String(course)),
+      ])
+      return
+    }
+
+    if (what === 'base') {
+      // Mooring is standing next to it, so clicking it means "park here":
+      // the nearest free sector alongside, which is what a player typing
+      // this out would have had to work out for themselves.
+      if (adjacent(patrol.sector, at)) return onBlip()
+      const berth = mooringFor(patrol, at)
+      if (!berth) return onBlip()
+      navBy(to(berth))
+      return
+    }
+
+    navBy(to(at))
+  }
+
+  const clickQuadrant = (at: Coord) => {
+    setPanel('sector')
+    navBy({
+      row: (at.row - patrol.quadrant.row) * SECTORS,
+      col: (at.col - patrol.quadrant.col) * SECTORS,
+    })
+  }
+
+  /** Fire or set, from a button rather than two prompts. */
+  const spend = (kind: 'beams' | 'shields', amount: number) => {
+    setAsk('command')
+    onCommand({ type: kind, energy: amount }, [
+      asked(QUESTION.command, kind === 'beams' ? 'BEA' : 'SHE'),
+      asked(QUESTION[kind], String(amount)),
+    ])
+  }
+
+  const simpleClick = (id: string, cmd: Command) => {
+    if (id === 'LRS' || id === 'COM') setPanel('galaxy')
+    setAsk('command')
+    onCommand(cmd, [asked(QUESTION.command, id)])
+  }
 
   /** `raw` is how the command buttons answer: a click is a whole answer. */
   const submit = (raw?: string) => {
@@ -176,7 +261,13 @@ export function BridgeScreen({
       {skin === 'modern' ? (
         <div className="bridge">
           <ShipPanel patrol={patrol} captainName={captainName} />
-          <TacticalView patrol={patrol} panel={panel} onPanel={setPanel} />
+          <TacticalView
+            patrol={patrol}
+            panel={panel}
+            onPanel={setPanel}
+            onSector={clickSector}
+            onQuadrant={clickQuadrant}
+          />
           <LogPanel lines={transcript} />
         </div>
       ) : (
@@ -238,24 +329,169 @@ export function BridgeScreen({
             not, and making somebody thumb-type NAV forty times is not
             faithfulness, it is an obstacle the original never had. Typing
             still works and is still the way it is meant to be played.
+
+            On the remaster they become an action bar instead, because half
+            of them have been replaced by pointing at the thing: NAV and TOR
+            are a click on the grid, and SRS is the grid.
           */}
-          {ask === 'command' && (
-            <div className="keys">
-              {COMMANDS.map(([id, what]) => (
-                <button
-                  key={id}
-                  className="btn btn-ghost key"
-                  title={what}
-                  onClick={() => {
-                    onBlip()
-                    submit(id)
-                  }}
-                >
-                  {id}
-                </button>
-              ))}
-            </div>
+          {ask === 'command' &&
+            (skin === 'modern' ? (
+              <ActionBar
+                patrol={patrol}
+                onSimple={simpleClick}
+                onSpend={spend}
+                onBlip={onBlip}
+              />
+            ) : (
+              <div className="keys">
+                {COMMANDS.map(([id, what]) => (
+                  <button
+                    key={id}
+                    className="btn btn-ghost key"
+                    title={what}
+                    onClick={() => {
+                      onBlip()
+                      submit(id)
+                    }}
+                  >
+                    {id}
+                  </button>
+                ))}
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Where to tie up.
+ *
+ * A starbase is moored *alongside*, never on, so clicking one has to pick a
+ * sector next to it -- and not any sector next to it, because most of them
+ * are as far from you as the base is. This takes the free berth nearest to
+ * where the ship already is, which is the one a player working it out on
+ * paper would have chosen.
+ */
+function mooringFor(patrol: Patrol, base: Coord): Coord | null {
+  const berths: Coord[] = []
+  for (let row = base.row - 1; row <= base.row + 1; row++) {
+    for (let col = base.col - 1; col <= base.col + 1; col++) {
+      const at = { row, col }
+      if (row < 0 || row >= SECTORS || col < 0 || col >= SECTORS) continue
+      if (same(at, base)) continue
+      if (occupant(patrol, at) !== null && !same(at, patrol.sector)) continue
+      berths.push(at)
+    }
+  }
+  if (berths.length === 0) return null
+
+  return berths.reduce((best, at) =>
+    Math.hypot(at.row - patrol.sector.row, at.col - patrol.sector.col) <
+    Math.hypot(best.row - patrol.sector.row, best.col - patrol.sector.col)
+      ? at
+      : best,
+  )
+}
+
+/**
+ * The remaster's action bar: the commands that are not a place.
+ *
+ * NAV, TOR and SRS are gone from it because they became pointing -- warping
+ * somewhere, shooting at something, and looking at where you are, all of
+ * which now have a thing on screen to click. What is left is the four that
+ * are not about a position, plus the two that spend energy.
+ *
+ * Those two ask "how much", which on paper is a second prompt and here is a
+ * row of amounts. They are amounts rather than a slider on purpose: energy
+ * is spent in round numbers and read back as a bar, and dragging for a
+ * precise 437 would be a worse version of typing it -- which still works.
+ */
+function ActionBar({
+  patrol,
+  onSimple,
+  onSpend,
+  onBlip,
+}: {
+  patrol: Patrol
+  onSimple: (id: string, cmd: Command) => void
+  onSpend: (kind: 'beams' | 'shields', amount: number) => void
+  onBlip: () => void
+}) {
+  const [armed, setArmed] = useState<'beams' | 'shields' | null>(null)
+
+  const arm = (which: 'beams' | 'shields') => {
+    onBlip()
+    setArmed((a) => (a === which ? null : which))
+  }
+
+  const fire = (amount: number) => {
+    if (!armed) return
+    onSpend(armed, Math.max(0, Math.floor(amount)))
+    setArmed(null)
+  }
+
+  const pool = armed === 'shields' ? patrol.energy + patrol.shields : patrol.energy
+  const presets = [250, 500, 1000].filter((n) => n <= pool)
+
+  return (
+    <div className="actions">
+      <div className="action-row">
+        <button className="btn btn-ghost key" onClick={() => arm('beams')}>
+          BEAMS
+        </button>
+        <button className="btn btn-ghost key" onClick={() => arm('shields')}>
+          SHIELDS
+        </button>
+        <button
+          className="btn btn-ghost key"
+          onClick={() => onSimple('LRS', { type: 'lrs' })}
+          title="Scan the nine quadrants around this one"
+        >
+          LONG RANGE
+        </button>
+        <button
+          className="btn btn-ghost key"
+          onClick={() => onSimple('COM', { type: 'chart' })}
+          title="The chart, and where you are on it"
+        >
+          CHART
+        </button>
+        <button className="btn btn-ghost key" onClick={() => onSimple('DAM', { type: 'damage' })}>
+          DAMAGE
+        </button>
+        <button
+          className="btn btn-ghost key"
+          onClick={() => onSimple('XXX', { type: 'resign' })}
+          title="Break off and go home"
+        >
+          BREAK OFF
+        </button>
+      </div>
+
+      {armed && (
+        <div className="action-row amounts">
+          <span className="panel-label">
+            {armed === 'beams' ? 'UNITS TO FIRE' : 'UNITS TO SHIELDS'}
+          </span>
+          {presets.map((n) => (
+            <button className="btn btn-ghost key" key={n} onClick={() => fire(n)}>
+              {n}
+            </button>
+          ))}
+          {armed === 'beams' ? (
+            <button className="btn btn-ghost key" onClick={() => fire(patrol.energy / 2)}>
+              HALF
+            </button>
+          ) : (
+            <button className="btn btn-ghost key" onClick={() => fire(0)}>
+              DOWN
+            </button>
           )}
+          <button className="btn btn-ghost key cancel" onClick={() => setArmed(null)}>
+            CANCEL
+          </button>
         </div>
       )}
     </div>

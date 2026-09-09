@@ -93,6 +93,7 @@ off the bottom by a better one.
 | `src/game/constants.ts` | every number, and every word the machine says |
 | `src/game/galaxy.ts` | the compass, the scatter, laying out a quadrant |
 | `src/game/engine.ts` | the rules: warp, beams, torpedoes, being shot at |
+| `src/game/aim.ts` | turning a click into a course and a warp factor |
 | `src/game/reducer.ts` | phases, and the only place a turn changes hands |
 | `src/audio/` | the synth, and the two bands written for it |
 | `src/components/` | the paper, the bridge, the console, and the screens either side |
@@ -100,5 +101,5 @@ off the bottom by a better one.
 `npm test` proves the parts that are arithmetic rather than judgement: that
 the compass closes, that a scattered galaxy is always worth flying, that a
 warp stops at the rim and short of anything in the way, that every way a
-patrol can end, ends it, and that every note in every tune is one the synth
-can find.
+patrol can end, ends it, that every click lands where it was aimed, and that
+every note in every tune is one the synth can find.

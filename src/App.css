@@ -692,6 +692,65 @@ html[data-skin='modern'] .head {
   stroke-width: 1.5;
 }
 
+/* --- pointing --------------------------------------------------------- */
+
+/* The click targets sit over everything and are invisible until hovered. */
+.cell {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.cell.on {
+  fill: rgba(255, 194, 71, 0.1);
+}
+
+.cell-dead {
+  cursor: default;
+}
+
+.cell-dead.on {
+  fill: rgba(255, 107, 93, 0.08);
+}
+
+/* The course, drawn before it is flown. */
+.aim line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 6;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+
+.aim circle {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  opacity: 0.75;
+}
+
+.aim-readout {
+  margin: 0;
+  min-height: 1.3em;
+  font-size: 0.78em;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--ink-dim);
+  text-align: center;
+}
+
+.quad {
+  cursor: pointer;
+}
+
+.quad.here {
+  cursor: default;
+}
+
+.quad.on rect {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
 /* Cel shading: one flat fill, one heavy outline, and a highlight that is a
    second flat fill rather than a gradient. */
 .mark path,
@@ -824,6 +883,32 @@ html[data-skin='modern'] .head {
   display: flex;
   flex-wrap: wrap;
   gap: 2px 4px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+}
+
+.amounts {
+  padding-top: 4px;
+  border-top: 1px solid rgba(232, 241, 255, 0.14);
+}
+
+.amounts .panel-label {
+  margin-right: 2px;
+}
+
+.key.cancel {
+  color: var(--warn);
 }
 
 .key {

@@ -153,6 +153,10 @@ export function InstructionsScreen({ onDone }: { onDone: () => void }) {
         </Line>
       ))}
       <Line> </Line>
+      <Line className="dim">ON THE REMASTER YOU CAN POINT INSTEAD: CLICK A SECTOR TO WARP TO
+        IT, A RAIDER TO PUT A TORPEDO THROUGH IT, A STARBASE TO MOOR ALONGSIDE, OR A QUADRANT
+        ON THE CHART TO CROSS TO IT. IT TYPES THE SAME COMMANDS FOR YOU, AND SAYS SO.</Line>
+      <Line> </Line>
       <Btn kind="primary" onClick={onDone}>
         UNDERSTOOD
       </Btn>
