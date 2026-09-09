@@ -68,7 +68,10 @@ their own galaxy, dealt off the same seed.
 
 One board, shared by everybody. Ending a session posts every captain in the
 party, and the top 50 comes back ranked best first: raiders destroyed, then
-days left on the orders, then torpedoes still in the racks.
+whole days left on the orders, then torpedoes still in the racks. Days are
+whole on the board and shown to a tenth in the game — the service's ranked
+columns are integers, and a tie-break finer than a day would be measuring
+the dice rather than the captain.
 
 There is no way to clear it. A captain leaves the list only by being pushed
 off the bottom by a better one.

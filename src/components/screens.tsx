@@ -309,7 +309,8 @@ export function HighScoreScreen({
   return (
     <div className="stack board">
       <Line className="accent">THE BOARD</Line>
-      <Line className="dim">RANKED ON RAIDERS DESTROYED, THEN DAYS LEFT, THEN TORPEDOES.</Line>
+      <Line className="dim">RANKED ON RAIDERS DESTROYED, THEN WHOLE DAYS LEFT, THEN
+        TORPEDOES.</Line>
       <Line> </Line>
       {state === 'loading' && <Line>ASKING THE MACHINE...</Line>}
       {state === 'error' && (
@@ -326,7 +327,7 @@ export function HighScoreScreen({
         scores.map((s, i) => (
           <Line key={s.id} className={highlight.includes(s.id) ? 'accent' : ''}>
             {String(i + 1).padStart(2)}. {s.name.padEnd(MAX_NAME)}{' '}
-            {String(s.killed).padStart(2)} {s.daysLeft.toFixed(1).padStart(5)}{' '}
+            {String(s.killed).padStart(2)} {String(s.daysLeft).padStart(3)}{' '}
             {String(s.torpedoes).padStart(2)}
           </Line>
         ))}

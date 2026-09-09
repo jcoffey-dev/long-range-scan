@@ -24,7 +24,13 @@ export interface Score {
   name: string
   /** Raiders destroyed. The rank, before any tie-break. */
   killed: number
-  /** Days still on the orders when the patrol ended. */
+  /**
+   * Whole days still on the orders when the patrol ended.
+   *
+   * The game counts days to a tenth and the board ranks on integers, so this
+   * is the floor of what the report screen shows. A tie-break finer than a
+   * day would be measuring the dice rather than the captain.
+   */
   daysLeft: number
   /** Torpedoes still in the racks. */
   torpedoes: number

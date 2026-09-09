@@ -185,7 +185,8 @@ export default function App() {
       captains.map((c) => ({
         name: c.name,
         killed: c.killed,
-        daysLeft: c.daysLeft,
+        // Whole days: the board's ranked columns are integers.
+        daysLeft: Math.floor(c.daysLeft),
         torpedoes: c.torpedoes,
         ending: c.outcome,
       })),
