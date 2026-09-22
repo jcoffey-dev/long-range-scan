@@ -30,7 +30,7 @@ npm run dev
 ```
 
 The leaderboard is a separate service; run
-[games-scores](https://github.com/jcoffey-dev/games-scores) alongside this if
+[games-scores](https://git.coffeylabs.org/jcoffey-dev/games-scores) alongside this if
 you want one, or do not, and the board will say so rather than break.
 
 You dial in rather than switch on, because in 1971 the game was not on your
