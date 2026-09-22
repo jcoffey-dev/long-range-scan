@@ -66,8 +66,8 @@ licence below meaningful:
   the synth in `src/audio/`. The only drawing in the repository is
   `public/favicon.svg`, which is a scan grid.
 - **The synth is shared with its siblings.** `src/audio/synth.ts` is the same
-  engine as the one in [lemonade](https://github.com/jcoffey-dev/lemonade) and
-  [wumpus](https://github.com/jcoffey-dev/wumpus) -- same author, same
+  engine as the one in [lemonade](https://git.coffeylabs.org/jcoffey-dev/lemonade) and
+  [wumpus](https://git.coffeylabs.org/jcoffey-dev/wumpus) -- same author, same
   licence. What is written for it here is new.
 
 ## The words on screen are ours, deliberately
