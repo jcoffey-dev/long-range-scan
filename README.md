@@ -1,5 +1,9 @@
 # Long Range Scan
 
+> [!NOTE]
+> Development happens on [git.coffeylabs.org/jcoffey-dev/long-range-scan](https://git.coffeylabs.org/jcoffey-dev/long-range-scan); the copy on GitHub is a read-only mirror.
+> Report issues at **[git.coffeylabs.org/jcoffey-dev/long-range-scan/issues](https://git.coffeylabs.org/jcoffey-dev/long-range-scan/issues)**, and join discussions at **[community.coffeylabs.org](https://community.coffeylabs.org)**.
+
 A browser recreation of the 1971 starship patrol game — the one you played on
 a printing terminal, hunting through sixty-four quadrants by reading three
 digits at a time.
